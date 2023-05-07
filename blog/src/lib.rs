@@ -1,3 +1,5 @@
+use std::i8;
+
 pub struct Post {
     state: Option<Box<dyn State>>,
     content: String,
@@ -55,7 +57,9 @@ struct Draft {}
 
 impl State for Draft {
     fn request_review(self: Box<Self>) -> Box<dyn State> {
-        Box::new(PendingReview {})
+        Box::new(PendingReview {
+            review_count: 1
+        })
     }
 
     fn approve(self: Box<Self>) -> Box<dyn State> {
@@ -71,7 +75,9 @@ impl State for Draft {
     }
 }
 
-struct PendingReview {}
+struct PendingReview {
+    review_count: i8
+}
 
 impl State for PendingReview {
     fn request_review(self: Box<Self>) -> Box<dyn State> {
@@ -79,7 +85,13 @@ impl State for PendingReview {
     }
 
     fn approve(self: Box<Self>) -> Box<dyn State> {
-        Box::new(Published {})
+        if self.review_count == 2 {
+            Box::new(Published {})
+        } else {
+            Box::new(PendingReview {
+                review_count: self.review_count + 1 
+            })
+        }
     }
 
     fn reject(self: Box<Self>) -> Box<dyn State> {
